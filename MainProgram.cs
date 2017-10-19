@@ -5,23 +5,24 @@ namespace FileNameMap
 {
     public class MainProgram
     {
-        private static string mainDirectory;
-        private static string outputFile;
-        private static string logFile;
+        private static string _mainDirectory;
+        private static string _outputFile;
+        private static string _logFile;
 
         public static void Main(string[] args)
         {
             string searchPath;
 
-            // Initial settings
-            mainDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-            outputFile = mainDirectory + "\\filesMapping.txt";
-            logFile = mainDirectory + "\\log.txt";
+            // Initial (default) settings
+            _mainDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+            _outputFile = _mainDirectory + "\\files_mapping.txt";
+            _logFile = _mainDirectory + "\\fnm_log.txt";
+
+            // Point out the location of the output files
+            Console.WriteLine("Archivo de salida en '" + _outputFile + "'");
+            Console.WriteLine("Logs en '" + _logFile + "'");
 
             // Read 'search directory' from Console
-            Console.WriteLine("Archivo de salida en '" + outputFile + "'");
-            Console.WriteLine("Logs en '" + logFile + "'");
-
             Console.Write(Environment.NewLine + "Ingrese el directorio raiz en donde buscar: ");
             searchPath = Console.ReadLine();
 
@@ -32,24 +33,28 @@ namespace FileNameMap
             {
                 Console.WriteLine(Environment.NewLine + "Leyendo los nombres de los archivos...");
 
-                if (!IntoFolders(searchPath))
+                // Search files and directories
+                if (!DiveIntoDir(searchPath))
                     Console.WriteLine(Environment.NewLine + "  ERROR. Favor de referirse al log para mayor información.");
                 else
                     Console.WriteLine(Environment.NewLine + "Todos los archivos en '" + searchPath + "' han sido mapeados.");
             }
         }
 
-        private static bool IntoFolders(string path)
+        // Peek into directories in search of files and more directories
+        private static bool DiveIntoDir(string path)
         {
             try
             {
-                string[] folders = Directory.GetDirectories(path);
+                string[] directories = Directory.GetDirectories(path);
                 string[] files = Directory.GetFiles(path);
 
-                foreach (string element in folders)
-                    IntoFolders(element);
+                // Dive into each directory under current one
+                foreach (string directory in directories)
+                    DiveIntoDir(directory);
 
-                return WriteFiles(files);
+                // Write results to output file (as they are found)
+                return WriteFilesToOutput(files);
             }
             catch (Exception ex)
             {
@@ -58,32 +63,34 @@ namespace FileNameMap
             }
         }
 
-        private static bool WriteFiles(string[] listF)
+        // Stream writer to output file
+        private static bool WriteFilesToOutput(string[] fileList)
         {
+            StreamWriter sWriter;
+
             try
             {
-                StreamWriter sWriter = new StreamWriter(outputFile, true);
+                sWriter = new StreamWriter(_outputFile, true);
 
-                foreach (string element in listF)
-                    sWriter.WriteLine(element);
+                foreach (string file in fileList)
+                    sWriter.WriteLine(file);
 
-                //sWriter.Flush();
                 sWriter.Close();
+                return true;
             }
             catch (Exception ex)
             {
                 LogEx(ex.Message, ex.ToString());
+                return false;
             }
-
-            return true;
         }
 
+        // Error logging
         private static void LogEx(string message, string ex)
         {
-            StreamWriter oFile = new StreamWriter(logFile, true);
+            StreamWriter oFile = new StreamWriter(_logFile, true);
 
             oFile.WriteLine(ex);
-            //oFile.Flush();
             oFile.Close();
         }
     }
