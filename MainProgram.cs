@@ -9,6 +9,9 @@ namespace FileNameMap
         private static string _outputFile;
         private static string _logFile;
 
+        private static ulong _fSize;
+        private static int _fCount;
+
         public static void Main(string[] args)
         {
             string searchPath;
@@ -31,13 +34,17 @@ namespace FileNameMap
                 Console.WriteLine(Environment.NewLine + "  ERROR. El directorio especificado no existe.");
             else
             {
+                _fSize = 0; _fCount = 0;
                 Console.WriteLine(Environment.NewLine + "Leyendo los nombres de los archivos...");
 
                 // Search files and directories
                 if (!DiveIntoDir(searchPath))
                     Console.WriteLine(Environment.NewLine + "  ERROR. Favor de referirse al log para mayor información.");
                 else
+                {
+                    // Results presentation
                     Console.WriteLine(Environment.NewLine + "Todos los archivos en '" + searchPath + "' han sido mapeados.");
+                }
             }
         }
 
@@ -63,14 +70,42 @@ namespace FileNameMap
             }
         }
 
+        /*
+        // File segmentation
+        int i = 0;
+        string line;
+        StreamReader sReader = new StreamReader(_outputFile);
+        StreamWriter sWriter;
+
+        while (!sReader.EndOfStream)
+        {
+            sWriter = new StreamWriter(_outputFile.Replace(".txt", "_" + i + ".txt"));
+
+            for (int k = 0; k < 90000; k++)
+            {
+                line = sReader.ReadLine();
+                sWriter.WriteLine(line);
+
+                if (sReader.EndOfStream)
+                    break;
+            }
+            sWriter.Close();
+
+            i++;
+        }
+        sReader.Close();
+        */
+
         // Stream writer to output file
         private static bool WriteFilesToOutput(string[] fileList)
         {
             StreamWriter sWriter;
+            _fCount = (int)Math.Floor((double)(_fSize / 80000));
+            _fSize += (ulong)ArrayItemCount(fileList);
 
             try
             {
-                sWriter = new StreamWriter(_outputFile, true);
+                sWriter = new StreamWriter(_outputFile.Replace(".txt", "_" + _fCount.ToString("000") + ".txt"), true);
 
                 foreach (string file in fileList)
                     sWriter.WriteLine(file);
@@ -92,6 +127,17 @@ namespace FileNameMap
 
             oFile.WriteLine(ex);
             oFile.Close();
+        }
+
+        // Count items in an object array
+        private static int ArrayItemCount(object[] arr)
+        {
+            int count = 0;
+
+            foreach (object o in arr)
+                count++;
+
+            return count;
         }
     }
 }
