@@ -1,9 +1,9 @@
 ﻿using System;
 using System.IO;
 
-namespace FileNameMap
+namespace FileScanner.ConsoleApplication
 {
-    public class MainProgram
+    internal class Program
     {
         private static string _mainDirectory;
         private static string _outputFile;
@@ -34,16 +34,19 @@ namespace FileNameMap
                 Console.WriteLine(Environment.NewLine + "  ERROR. El directorio especificado no existe.");
             else
             {
-                _fSize = 0; _fCount = 0;
+                _fSize = 0;
+                _fCount = 0;
                 Console.WriteLine(Environment.NewLine + "Leyendo los nombres de los archivos...");
 
                 // Search files and directories
                 if (!DiveIntoDir(searchPath))
-                    Console.WriteLine(Environment.NewLine + "  ERROR. Favor de referirse al log para mayor información.");
+                    Console.WriteLine(
+                        Environment.NewLine + "  ERROR. Favor de referirse al log para mayor información.");
                 else
                 {
                     // Results presentation
-                    Console.WriteLine(Environment.NewLine + "Todos los archivos en '" + searchPath + "' han sido mapeados.");
+                    Console.WriteLine(Environment.NewLine + "Todos los archivos en '" + searchPath +
+                                      "' han sido mapeados.");
                 }
             }
         }
@@ -100,8 +103,8 @@ namespace FileNameMap
         private static bool WriteFilesToOutput(string[] fileList)
         {
             StreamWriter sWriter;
-            _fCount = (int)Math.Floor((double)(_fSize / 80000));
-            _fSize += (ulong)ArrayItemCount(fileList);
+            _fCount = (int) Math.Floor((double) (_fSize / 80000));
+            _fSize += (ulong) ArrayItemCount(fileList);
 
             try
             {
