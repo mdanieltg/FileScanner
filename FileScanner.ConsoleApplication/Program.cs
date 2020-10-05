@@ -73,32 +73,6 @@ namespace FileScanner.ConsoleApplication
             }
         }
 
-        /*
-        // File segmentation
-        int i = 0;
-        string line;
-        StreamReader sReader = new StreamReader(_outputFile);
-        StreamWriter sWriter;
-
-        while (!sReader.EndOfStream)
-        {
-            sWriter = new StreamWriter(_outputFile.Replace(".txt", "_" + i + ".txt"));
-
-            for (int k = 0; k < 90000; k++)
-            {
-                line = sReader.ReadLine();
-                sWriter.WriteLine(line);
-
-                if (sReader.EndOfStream)
-                    break;
-            }
-            sWriter.Close();
-
-            i++;
-        }
-        sReader.Close();
-        */
-
         // Stream writer to output file
         private static bool WriteFilesToOutput(string[] fileList)
         {
