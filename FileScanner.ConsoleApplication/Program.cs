@@ -5,116 +5,101 @@ namespace FileScanner.ConsoleApplication
 {
     internal class Program
     {
-        private static string _mainDirectory;
         private static string _outputFile;
         private static string _logFile;
 
-        private static ulong _fSize;
-        private static int _fCount;
+        private static ulong _fileSize;
+        private static int _fileCount;
 
         public static void Main(string[] args)
         {
-            string searchPath;
-
             // Initial (default) settings
-            _mainDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-            _outputFile = _mainDirectory + "\\files_mapping.txt";
-            _logFile = _mainDirectory + "\\fnm_log.txt";
+            var basePath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+            _outputFile = basePath + "\\files_mapping.txt";
+            _logFile = basePath + "\\fnm_log.txt";
 
             // Point out the location of the output files
-            Console.WriteLine("Archivo de salida en '" + _outputFile + "'");
-            Console.WriteLine("Logs en '" + _logFile + "'");
+            Console.WriteLine("Archivo de salida en '{0}'", _outputFile);
+            Console.WriteLine("Logs en '{0}'", _logFile);
+            Console.WriteLine();
 
             // Read 'search directory' from Console
-            Console.Write(Environment.NewLine + "Ingrese el directorio raiz en donde buscar: ");
-            searchPath = Console.ReadLine();
+            Console.Write("Ingrese el directorio raíz en donde buscar: ");
+            var searchPath = Console.ReadLine();
 
             // Directory validation
             if (!Directory.Exists(searchPath))
-                Console.WriteLine(Environment.NewLine + "  ERROR. El directorio especificado no existe.");
+                Console.WriteLine("  ERROR. El directorio especificado no existe.");
             else
             {
-                _fSize = 0;
-                _fCount = 0;
-                Console.WriteLine(Environment.NewLine + "Leyendo los nombres de los archivos...");
+                _fileSize = 0;
+                _fileCount = 0;
+                Console.WriteLine("Leyendo los nombres de los archivos...");
 
                 // Search files and directories
-                if (!DiveIntoDir(searchPath))
-                    Console.WriteLine(
-                        Environment.NewLine + "  ERROR. Favor de referirse al log para mayor información.");
+                if (!Scan(searchPath))
+                    Console.WriteLine("  ERROR. Favor de referirse al log para mayor información.");
                 else
                 {
                     // Results presentation
-                    Console.WriteLine(Environment.NewLine + "Todos los archivos en '" + searchPath +
-                                      "' han sido mapeados.");
+                    Console.WriteLine("Todos los archivos en '{0}' han sido mapeados.", searchPath);
                 }
             }
         }
 
-        // Peek into directories in search of files and more directories
-        private static bool DiveIntoDir(string path)
+        private static bool Scan(string path)
         {
             try
             {
-                string[] directories = Directory.GetDirectories(path);
-                string[] files = Directory.GetFiles(path);
-
-                // Dive into each directory under current one
-                foreach (string directory in directories)
-                    DiveIntoDir(directory);
-
-                // Write results to output file (as they are found)
-                return WriteFilesToOutput(files);
+                GetContents(path);
+                return true;
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                LogEx(ex.Message, ex.ToString());
+                LogEx(e.ToString());
                 return false;
             }
         }
 
-        // Stream writer to output file
-        private static bool WriteFilesToOutput(string[] fileList)
+        // Get into directories in search of files and more directories
+        private static void GetContents(string path)
         {
-            StreamWriter sWriter;
-            _fCount = (int) Math.Floor((double) (_fSize / 80000));
-            _fSize += (ulong) ArrayItemCount(fileList);
+            string[] directories = Directory.GetDirectories(path),
+                files = Directory.GetFiles(path);
 
-            try
+            // Dive into each directory under current one
+            foreach (var directory in directories)
+                GetContents(directory);
+
+            // Write results to output file (as they are found)
+            WriteFilesToOutput(files);
+        }
+
+        // Stream writer to output file
+        private static void WriteFilesToOutput(string[] files)
+        {
+            if (files.Length == 0) return;
+
+            _fileCount = (int) Math.Floor(_fileSize / 80000d);
+            _fileSize += (ulong) files.Length;
+
+            var fileSuffix = $"_{_fileCount.ToString("000")}.txt";
+            var filePath = _outputFile.Replace(".txt", fileSuffix);
+
+            using (var streamWriter = new StreamWriter(filePath, true))
             {
-                sWriter = new StreamWriter(_outputFile.Replace(".txt", "_" + _fCount.ToString("000") + ".txt"), true);
-
-                foreach (string file in fileList)
-                    sWriter.WriteLine(file);
-
-                sWriter.Close();
-                return true;
-            }
-            catch (Exception ex)
-            {
-                LogEx(ex.Message, ex.ToString());
-                return false;
+                foreach (var file in files)
+                    streamWriter.WriteLine(file);
             }
         }
 
         // Error logging
-        private static void LogEx(string message, string ex)
+        private static void LogEx(string ex)
         {
-            StreamWriter oFile = new StreamWriter(_logFile, true);
-
-            oFile.WriteLine(ex);
-            oFile.Close();
-        }
-
-        // Count items in an object array
-        private static int ArrayItemCount(object[] arr)
-        {
-            int count = 0;
-
-            foreach (object o in arr)
-                count++;
-
-            return count;
+            using (var streamWriter = new StreamWriter(_logFile, true))
+            {
+                streamWriter.WriteLine(ex);
+            }
         }
     }
 }
